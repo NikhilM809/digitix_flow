@@ -9,7 +9,7 @@ type FinancialFields = {
 };
 
 export function stripFinance<T extends FinancialFields>(record: T, role: Role): T {
-  if (role === "ADMIN") return record;
+  if (role === "ADMIN" || role === "SENIOR_MANAGER") return record;
   const clone = { ...record };
   delete clone.sellValue;
   delete clone.invoices;

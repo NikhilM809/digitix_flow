@@ -6,14 +6,14 @@ import { HOUR_STATUS_LABEL, workTypeLabel } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { getActiveClients, getActiveWorkTypes } from "@/lib/catalog";
 import { formatDate, formatHours } from "@/lib/format";
-import { requireRole } from "@/lib/permissions";
+import { STAFF_ROLES, isAdminLike, requireRole } from "@/lib/permissions";
 
 export default async function HoursPage({
   searchParams,
 }: {
   searchParams: Promise<{ employeeId?: string; projectId?: string; status?: string; client?: string }>;
 }) {
-  const user = await requireRole("ADMIN", "MANAGER");
+  const user = await requireRole(...STAFF_ROLES);
   const { employeeId = "", projectId = "", status = "", client = "" } = await searchParams;
   const [entries, employees, projects, tasks, workTypes, clients] = await Promise.all([
     prisma.timeEntry.findMany({
@@ -79,7 +79,7 @@ export default async function HoursPage({
           canChooseEmployee
         />
       </Card>
-      {user.role === "ADMIN" ? (
+      {isAdminLike(user.role) ? (
         <Card className="mb-6 p-6">
           <h2 className="mb-4 font-display text-xl">Add a work type</h2>
           <AddWorkTypeForm />

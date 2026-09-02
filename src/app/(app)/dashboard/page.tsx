@@ -12,7 +12,7 @@ import { ensureCurrencies } from "@/lib/currency";
 import { getActiveClients } from "@/lib/catalog";
 import { totalsByCurrency, remainingByCurrency } from "@/lib/finance";
 import { formatDate, formatHours, isEtaSoon, isOverdue } from "@/lib/format";
-import { requireUser } from "@/lib/permissions";
+import { isAdminLike, requireUser } from "@/lib/permissions";
 import { visibleProjectsWhere } from "@/lib/project-access";
 import { isInactiveStatus } from "@/lib/project-status";
 import { ProjectStatus, TaskStatus } from "@prisma/client";
@@ -25,7 +25,7 @@ export default async function DashboardPage({
   const user = await requireUser();
   const params = await searchParams;
   const client = String(params.client || "");
-  if (user.role === "ADMIN") return <AdminDashboard client={client} />;
+  if (isAdminLike(user.role)) return <AdminDashboard client={client} />;
   if (user.role === "MANAGER") return <ManagerDashboard userId={user.id} name={user.name} />;
   return <EmployeeDashboard userId={user.id} name={user.name} />;
 }

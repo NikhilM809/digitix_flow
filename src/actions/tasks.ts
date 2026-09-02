@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Role, TaskStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { notifyUsers } from "@/lib/notify";
-import { ActionError, assertRole, requireUser } from "@/lib/permissions";
+import { ActionError, STAFF_ROLES, assertRole, requireUser } from "@/lib/permissions";
 import { isInactiveStatus } from "@/lib/project-status";
 
 function parseDate(value?: string | null) {
@@ -23,7 +23,7 @@ async function ensureAssignment(projectId: string, employeeId: string, assignedB
 
 export async function createTask(projectId: string, formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN, Role.MANAGER]);
+  assertRole(user, STAFF_ROLES);
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Task name is required." };
 
@@ -90,7 +90,7 @@ export async function updateTask(taskId: string, formData: FormData) {
     return { ok: true };
   }
 
-  assertRole(user, [Role.ADMIN, Role.MANAGER]);
+  assertRole(user, STAFF_ROLES);
   const assignedEmployeeId = String(formData.get("assignedEmployeeId") || "") || null;
   const previousAssignee = task.assignedEmployeeId;
   await prisma.task.update({

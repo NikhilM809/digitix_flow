@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { getSettings, sumHours } from "@/lib/data";
 import { formatDate, formatHours, formatMoney } from "@/lib/format";
 import { PAGE_SIZE, PROJECT_STATUS_LABEL, PROJECT_STATUS_ORDER } from "@/lib/constants";
-import { canSeeFinance, requireRole } from "@/lib/permissions";
+import { PROJECT_MANAGER_ROLES, STAFF_ROLES, canCreateProject, canSeeFinance, requireRole } from "@/lib/permissions";
 import { withVisibleProjects } from "@/lib/project-access";
 import { getActiveClients } from "@/lib/catalog";
 import { AlertPills } from "@/components/status";
@@ -19,7 +19,7 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const user = await requireRole("ADMIN", "MANAGER");
+  const user = await requireRole(...STAFF_ROLES);
   const params = await searchParams;
   const tab = String(params.status || "ALL").toUpperCase();
   const q = String(params.q || "").trim();
@@ -64,7 +64,7 @@ export default async function ProjectsPage({
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.user.findMany({ where: { role: { in: ["ADMIN", "MANAGER"] } }, orderBy: { name: "asc" } }),
+    prisma.user.findMany({ where: { role: { in: PROJECT_MANAGER_ROLES } }, orderBy: { name: "asc" } }),
     prisma.user.findMany({ where: { role: "EMPLOYEE", active: true }, orderBy: { name: "asc" } }),
     getActiveClients(),
   ]);
@@ -77,7 +77,7 @@ export default async function ProjectsPage({
         title="Projects"
         description="Track every job from bid to close."
         actions={
-          user.role === "ADMIN" ? (
+          canCreateProject(user.role) ? (
             <Link href="/projects/new">
               <Button>New project</Button>
             </Link>

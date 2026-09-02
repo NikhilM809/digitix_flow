@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Role } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { slugWorkTypeCode } from "@/lib/work-types";
-import { assertRole, requireUser } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, assertRole, requireUser } from "@/lib/permissions";
 
 function revalidateCatalog() {
   revalidatePath("/settings");
@@ -17,7 +16,7 @@ function revalidateCatalog() {
 
 export async function addClient(formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const name = String(formData.get("name") ?? "").trim();
   const legalName = String(formData.get("legalName") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
@@ -33,7 +32,7 @@ export async function addClient(formData: FormData) {
 
 export async function saveClient(id: string, formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const name = String(formData.get("name") ?? "").trim();
   const legalName = String(formData.get("legalName") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
@@ -49,7 +48,7 @@ export async function saveClient(id: string, formData: FormData) {
 
 export async function addInvoiceService(formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const name = String(formData.get("name") ?? "").trim();
   if (name.length < 2) return { error: "Service name is required." };
   const exists = await prisma.invoiceService.findFirst({ where: { name } });
@@ -61,7 +60,7 @@ export async function addInvoiceService(formData: FormData) {
 
 export async function addWorkType(formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const name = String(formData.get("name") ?? "").trim();
   const category = String(formData.get("category") ?? "other") || "other";
   if (name.length < 2) return { error: "Work type name is required." };

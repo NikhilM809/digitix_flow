@@ -121,6 +121,9 @@ async function main() {
   const admin = await prisma.user.create({
     data: { name: "Priya Nair", email: "admin@digitix.local", password, role: Role.ADMIN },
   });
+  const asha = await prisma.user.create({
+    data: { name: "Asha Menon", email: "asha@digitix.local", password, role: Role.SENIOR_MANAGER },
+  });
   const arjun = await prisma.user.create({
     data: { name: "Arjun Mehta", email: "arjun@digitix.local", password, role: Role.MANAGER },
   });
@@ -257,9 +260,18 @@ async function main() {
       href: "/billing",
     },
   });
+  await prisma.notification.create({
+    data: {
+      userId: asha.id,
+      title: "Studio access",
+      message: "Senior managers can create projects and use the same admin tools.",
+      href: "/projects/new",
+    },
+  });
 
   console.log(`Seeded ${tracker.projects.length} Pureprofile projects and ${tracker.hours.length} hour rows.`);
   console.log("Login: admin@digitix.local / Digitix@123");
+  console.log("Senior manager: asha@digitix.local / Digitix@123");
 }
 
 main()

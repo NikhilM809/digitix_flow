@@ -25,7 +25,7 @@ import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
+import { APP_NAME, APP_TAGLINE, ROLE_LABEL } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { BrandLogo } from "@/components/logo";
 
@@ -58,7 +58,7 @@ const EMPLOYEE_NAV: NavItem[] = [
 ];
 
 function navFor(role: Role) {
-  if (role === "ADMIN") return ADMIN_NAV;
+  if (role === "ADMIN" || role === "SENIOR_MANAGER") return ADMIN_NAV;
   if (role === "MANAGER") return MANAGER_NAV;
   return EMPLOYEE_NAV;
 }
@@ -177,7 +177,7 @@ export function AppShell({
             </div>
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs capitalize text-muted">{user.role.toLowerCase()}</p>
+              <p className="text-xs text-muted">{ROLE_LABEL[user.role]}</p>
             </div>
           </div>
         </header>

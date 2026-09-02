@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { getAllCurrencies } from "@/lib/currency";
 import { isCurrentOrPastPeriod, periodSortKey, remainingByCurrency, totalsByCurrency } from "@/lib/finance";
 import { formatHours, formatMonthYear } from "@/lib/format";
-import { requireRole } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, requireRole } from "@/lib/permissions";
 import { getActiveClients } from "@/lib/catalog";
 
 export default async function ReportsPage({
@@ -14,7 +14,7 @@ export default async function ReportsPage({
 }: {
   searchParams: Promise<{ view?: string; currency?: string; client?: string }>;
 }) {
-  await requireRole("ADMIN");
+  await requireRole(...ADMIN_LIKE_ROLES);
   const { view = "monthly", currency = "", client = "" } = await searchParams;
   const [currencies, clients] = await Promise.all([getAllCurrencies(), getActiveClients()]);
   const now = new Date();

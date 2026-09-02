@@ -9,7 +9,7 @@ import { splitEstimatedHours } from "@/lib/work-types";
 import { nextProjectCode } from "@/lib/data";
 import { getDefaultCurrency } from "@/lib/currency";
 import { notifyAdmins, notifyManagersOfProject, notifyUsers } from "@/lib/notify";
-import { ActionError, assertRole, requireUser } from "@/lib/permissions";
+import { ActionError, ADMIN_LIKE_ROLES, STAFF_ROLES, assertRole, isAdminLike, requireUser } from "@/lib/permissions";
 import { canSelectCancel, isInactiveStatus, statusesAvailable } from "@/lib/project-status";
 import { PROJECT_STATUS_LABEL } from "@/lib/constants";
 
@@ -120,7 +120,7 @@ function revalidateProject(projectId: string) {
 
 export async function createProject(formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
 
   const parsed = projectSchema.safeParse({
     name: formData.get("name"),
@@ -152,7 +152,7 @@ export async function createProject(formData: FormData) {
 
   const managerId = parsed.data.managerId;
   const manager = await prisma.user.findFirst({
-    where: { id: managerId, role: { in: [Role.MANAGER, Role.ADMIN] }, active: true },
+    where: { id: managerId, role: { in: [Role.MANAGER, Role.SENIOR_MANAGER, Role.ADMIN] }, active: true },
   });
   if (!manager) return { error: "Select a valid project manager." };
 
@@ -260,7 +260,7 @@ export async function updateProject(projectId: string, formData: FormData) {
   data.name = name;
   data.clientName = clientName;
 
-  if (user.role === Role.ADMIN) {
+  if (isAdminLike(user.role)) {
     const sellValue = Number(formData.get("sellValue") ?? existing.sellValue);
     data.sellValue = sellValue;
     const split = readHourSplit(formData, estimatedHours);
@@ -298,7 +298,7 @@ export async function updateProject(projectId: string, formData: FormData) {
   await recordStatusChange(projectId, existing.status, nextStatus, user.id, existing.name);
 
   const employeeIds = formList(formData, "employeeIds");
-  if (user.role === Role.ADMIN || user.role === Role.MANAGER) {
+  if (isAdminLike(user.role) || user.role === Role.MANAGER) {
     const current = await prisma.projectAssignment.findMany({ where: { projectId } });
     const currentIds = current.map((row) => row.employeeId);
     const toAdd = employeeIds.filter((id) => !currentIds.includes(id));
@@ -356,7 +356,7 @@ export async function updateProjectStatus(projectId: string, formData: FormData)
 
 export async function closeProject(projectId: string) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN, Role.MANAGER]);
+  assertRole(user, STAFF_ROLES);
   const project = await prisma.project.findUnique({ where: { id: projectId } });
   if (!project) throw new ActionError("Project not found.");
   const invalid = statusTransitionError(project.status, "CLOSE");
@@ -371,7 +371,7 @@ export async function closeProject(projectId: string) {
 
 export async function reopenProject(projectId: string) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const project = await prisma.project.findUnique({ where: { id: projectId } });
   if (!project) throw new ActionError("Project not found.");
   await prisma.project.update({
@@ -384,7 +384,7 @@ export async function reopenProject(projectId: string) {
 
 export async function deleteProject(projectId: string) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const project = await prisma.project.findUnique({ where: { id: projectId } });
   if (!project) throw new ActionError("Project not found.");
   await prisma.project.delete({ where: { id: projectId } });

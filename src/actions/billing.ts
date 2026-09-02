@@ -1,17 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Role } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { saveInvoicePdf } from "@/lib/invoice-files";
 import { formatInvoiceNumber, getSettings, nextYearlyInvoiceSequence } from "@/lib/data";
 import { getDefaultCurrency } from "@/lib/currency";
 import { notifyAdmins } from "@/lib/notify";
-import { ActionError, assertRole, requireUser } from "@/lib/permissions";
+import { ActionError, ADMIN_LIKE_ROLES, assertRole, requireUser } from "@/lib/permissions";
 
 export async function approveForInvoice(projectId: string) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: { invoices: true },
@@ -30,7 +29,7 @@ export async function approveForInvoice(projectId: string) {
 
 export async function markProjectsForBilling(formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const projectIds = [...new Set(formData.getAll("projectIds").map(String).filter(Boolean))];
   if (!projectIds.length) return { error: "Select at least one project." };
 
@@ -65,7 +64,7 @@ export async function markProjectsForBilling(formData: FormData) {
 
 export async function generateInvoices(formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const month = Number(formData.get("billingMonth"));
   const year = Number(formData.get("billingYear"));
   const invoiceDate = new Date(`${formData.get("invoiceDate")}T12:00:00`);
@@ -205,7 +204,7 @@ async function uniqueInvoiceNumber(invoiceNumber: string) {
 
 export async function uploadHistoricalInvoice(formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const invoiceNumber = String(formData.get("invoiceNumber") ?? "").trim();
   const month = Number(formData.get("billingMonth"));
   const year = Number(formData.get("billingYear"));
@@ -329,7 +328,7 @@ export async function uploadHistoricalInvoice(formData: FormData) {
 
 export async function attachInvoicePdf(batchId: string, formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const file = formData.get("pdf") as File | null;
   if (!file) return { error: "Choose a PDF invoice to upload." };
   const batch = await prisma.invoiceBatch.findUnique({ where: { id: batchId } });
@@ -346,7 +345,7 @@ export async function attachInvoicePdf(batchId: string, formData: FormData) {
 
 export async function markInvoicePaid(invoiceId: string) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId },
     include: { project: true, batch: true },
@@ -376,7 +375,7 @@ export async function markInvoicePaid(invoiceId: string) {
 
 export async function markBatchPaid(batchId: string) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const batch = await prisma.invoiceBatch.findUnique({
     where: { id: batchId },
     include: { invoices: true },

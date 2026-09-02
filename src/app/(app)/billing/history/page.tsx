@@ -7,14 +7,14 @@ import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/data";
 import { getActiveClients, getActiveInvoiceServices } from "@/lib/catalog";
 import { formatDate, formatMoney, formatMonthYear } from "@/lib/format";
-import { requireRole } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, requireRole } from "@/lib/permissions";
 
 export default async function BillingHistoryPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; status?: string; client?: string; month?: string; year?: string }>;
 }) {
-  await requireRole("ADMIN");
+  await requireRole(...ADMIN_LIKE_ROLES);
   const { q = "", status = "", client = "", month = "", year = "" } = await searchParams;
   const settings = await getSettings();
   const [catalogClients, invoiceServices] = await Promise.all([getActiveClients(), getActiveInvoiceServices()]);

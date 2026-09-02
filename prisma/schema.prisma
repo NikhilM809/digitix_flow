@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   ADMIN
+  SENIOR_MANAGER
   MANAGER
   EMPLOYEE
 }

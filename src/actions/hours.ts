@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { hoursByWorkType } from "@/lib/data";
 import { ensureCatalog } from "@/lib/catalog";
 import { notifyAdmins, notifyUsers } from "@/lib/notify";
-import { ActionError, assertRole, requireUser } from "@/lib/permissions";
+import { ActionError, STAFF_ROLES, assertRole, requireUser } from "@/lib/permissions";
 import { isInactiveStatus } from "@/lib/project-status";
 
 function parseDate(value?: string | null) {
@@ -108,7 +108,7 @@ export async function addHours(formData: FormData) {
 
 export async function reviewHours(entryId: string) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN, Role.MANAGER]);
+  assertRole(user, STAFF_ROLES);
   const entry = await prisma.timeEntry.findUnique({ where: { id: entryId } });
   if (!entry) throw new ActionError("Entry not found.");
   await prisma.timeEntry.update({

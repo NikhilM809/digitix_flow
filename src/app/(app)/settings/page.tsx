@@ -6,11 +6,11 @@ import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/data";
 import { ensureCatalog } from "@/lib/catalog";
 import { getAllCurrencies } from "@/lib/currency";
-import { requireRole } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, requireRole } from "@/lib/permissions";
 import { asFormAction } from "@/lib/utils";
 
 export default async function SettingsPage() {
-  await requireRole("ADMIN");
+  await requireRole(...ADMIN_LIKE_ROLES);
   await ensureCatalog();
   const [settings, currencies, clients, services, workTypes] = await Promise.all([
     getSettings(),

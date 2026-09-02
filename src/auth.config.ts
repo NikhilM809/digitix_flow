@@ -1,6 +1,8 @@
 import type { NextAuthConfig } from "next-auth";
 
-type Role = "ADMIN" | "MANAGER" | "EMPLOYEE";
+type Role = "ADMIN" | "SENIOR_MANAGER" | "MANAGER" | "EMPLOYEE";
+
+const ADMIN_LIKE: Role[] = ["ADMIN", "SENIOR_MANAGER"];
 
 const ADMIN_PREFIXES = [
   "/employees",
@@ -42,11 +44,14 @@ export const authConfig = {
 
       if (!isLoggedIn) return false;
 
-      if (startsWithAny(path, ADMIN_PREFIXES) && role !== "ADMIN") {
+      if (startsWithAny(path, ADMIN_PREFIXES) && (!role || !ADMIN_LIKE.includes(role))) {
         return Response.redirect(new URL("/dashboard", request.nextUrl));
       }
 
-      if ((path === "/projects/new" || path.startsWith("/projects/new/")) && role !== "ADMIN") {
+      if (
+        (path === "/projects/new" || path.startsWith("/projects/new/")) &&
+        (!role || !ADMIN_LIKE.includes(role))
+      ) {
         return Response.redirect(new URL("/projects", request.nextUrl));
       }
 

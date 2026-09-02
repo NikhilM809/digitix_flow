@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/data";
 import { buildApprovalWorkbook } from "@/lib/approval-excel";
-import { requireApiRole } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, requireApiRole } from "@/lib/permissions";
 
 export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const authz = await requireApiRole("ADMIN");
+  const authz = await requireApiRole(...ADMIN_LIKE_ROLES);
   if (!authz.ok) return authz.response;
   const { id } = await context.params;
   const url = new URL(request.url);

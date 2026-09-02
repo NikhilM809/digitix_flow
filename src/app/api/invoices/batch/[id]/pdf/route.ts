@@ -4,10 +4,10 @@ import { getSettings } from "@/lib/data";
 import { findClientByName } from "@/lib/catalog";
 import { readInvoicePdf } from "@/lib/invoice-files";
 import { buildClientInvoicePdf } from "@/lib/invoice-pdf";
-import { requireApiRole } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, requireApiRole } from "@/lib/permissions";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const authz = await requireApiRole("ADMIN");
+  const authz = await requireApiRole(...ADMIN_LIKE_ROLES);
   if (!authz.ok) return authz.response;
   const { id } = await context.params;
   const batch = await prisma.invoiceBatch.findUnique({

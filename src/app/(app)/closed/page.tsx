@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { canSeeFinance, requireRole } from "@/lib/permissions";
+import { STAFF_ROLES, canSeeFinance, isAdminLike, requireRole } from "@/lib/permissions";
 import { sumHours } from "@/lib/data";
 import { formatDate, formatHours, formatMoney } from "@/lib/format";
 import { billingStatusForProject } from "@/lib/finance";
@@ -13,7 +13,7 @@ export default async function ClosedProjectsPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  const user = await requireRole("ADMIN", "MANAGER");
+  const user = await requireRole(...STAFF_ROLES);
   const { q = "" } = await searchParams;
   const finance = canSeeFinance(user.role);
   const projects = await prisma.project.findMany({
@@ -41,7 +41,7 @@ export default async function ClosedProjectsPage({
       <PageHeader
         title="Closed projects"
         description={
-          user.role === "ADMIN"
+          isAdminLike(user.role)
             ? "Historical record stays available after close and billing."
             : "Closed projects stay visible for 30 days."
         }

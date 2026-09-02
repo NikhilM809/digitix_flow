@@ -3,10 +3,10 @@ import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/data";
 import { buildEffortsTrackerWorkbook } from "@/lib/efforts-tracker-excel";
 import { formatMonthYear } from "@/lib/format";
-import { requireApiRole } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, requireApiRole } from "@/lib/permissions";
 
 export async function POST(request: Request) {
-  const authz = await requireApiRole("ADMIN");
+  const authz = await requireApiRole(...ADMIN_LIKE_ROLES);
   if (!authz.ok) return authz.response;
 
   const body = (await request.json().catch(() => null)) as

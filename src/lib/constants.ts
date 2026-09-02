@@ -86,6 +86,7 @@ export const BILLING_STATUS_LABEL = {
 
 export const ROLE_LABEL: Record<Role, string> = {
   ADMIN: "Admin",
+  SENIOR_MANAGER: "Senior Manager",
   MANAGER: "Manager",
   EMPLOYEE: "Employee",
 };

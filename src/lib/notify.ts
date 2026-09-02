@@ -18,7 +18,7 @@ export async function notifyUsers(
 
 export async function notifyAdmins(payload: { title: string; message: string; href?: string }) {
   const admins = await prisma.user.findMany({
-    where: { role: "ADMIN", active: true },
+    where: { role: { in: ["ADMIN", "SENIOR_MANAGER"] }, active: true },
     select: { id: true },
   });
   await notifyUsers(

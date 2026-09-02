@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Role } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { assertRole, requireUser } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, assertRole, requireUser } from "@/lib/permissions";
 
 function normalizeCode(value: string) {
   return value.trim().toUpperCase();
@@ -11,7 +10,7 @@ function normalizeCode(value: string) {
 
 export async function createCurrency(formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const name = String(formData.get("name") ?? "").trim();
   const code = normalizeCode(String(formData.get("code") ?? ""));
   const symbol = String(formData.get("symbol") ?? "").trim();
@@ -28,7 +27,7 @@ export async function createCurrency(formData: FormData) {
 
 export async function updateCurrency(currencyId: string, formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const name = String(formData.get("name") ?? "").trim();
   const code = normalizeCode(String(formData.get("code") ?? ""));
   const symbol = String(formData.get("symbol") ?? "").trim();
@@ -50,7 +49,7 @@ export async function updateCurrency(currencyId: string, formData: FormData) {
 
 export async function setDefaultCurrency(currencyId: string) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const currency = await prisma.currency.findUnique({ where: { id: currencyId } });
   if (!currency) return { error: "Currency not found." };
   if (!currency.active) return { error: "Activate the currency before making it default." };

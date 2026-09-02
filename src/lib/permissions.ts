@@ -10,6 +10,35 @@ export type SessionUser = {
   role: Role;
 };
 
+export const ADMIN_LIKE_ROLES: Role[] = [Role.ADMIN, Role.SENIOR_MANAGER];
+export const STAFF_ROLES: Role[] = [Role.ADMIN, Role.SENIOR_MANAGER, Role.MANAGER];
+export const ASSIGNABLE_ROLES: Role[] = [Role.ADMIN, Role.SENIOR_MANAGER, Role.MANAGER, Role.EMPLOYEE];
+export const PROJECT_MANAGER_ROLES: Role[] = [Role.ADMIN, Role.SENIOR_MANAGER, Role.MANAGER];
+
+export function isAdminLike(role: Role) {
+  return role === Role.ADMIN || role === Role.SENIOR_MANAGER;
+}
+
+export function canCreateProject(role: Role) {
+  return isAdminLike(role);
+}
+
+export function canSeeFinance(role: Role) {
+  return isAdminLike(role);
+}
+
+export function canManagePeople(role: Role) {
+  return isAdminLike(role);
+}
+
+export function isStaff(role: Role) {
+  return role !== Role.EMPLOYEE;
+}
+
+export function canBeProjectManager(role: Role) {
+  return role !== Role.EMPLOYEE;
+}
+
 export async function getCurrentUser() {
   const session = await auth();
   if (!session?.user?.id || !session.user.role) return null;
@@ -33,14 +62,6 @@ export async function requireRole(...roles: Role[]) {
     redirect("/dashboard");
   }
   return user;
-}
-
-export function canSeeFinance(role: Role) {
-  return role === "ADMIN";
-}
-
-export function isStaff(role: Role) {
-  return role === "ADMIN" || role === "MANAGER";
 }
 
 export class ActionError extends Error {

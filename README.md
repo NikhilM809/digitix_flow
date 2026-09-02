@@ -20,12 +20,14 @@ Password for all accounts: `Digitix@123`
 | Role | Email |
 | --- | --- |
 | Admin | admin@digitix.local |
+| Senior Manager | asha@digitix.local |
 | Manager | arjun@digitix.local |
 | Employee | john@digitix.local |
 
 ## What this version covers
 
-- Roles: Admin, Manager, Employee (UI + API)
+- Roles: Admin, Senior Manager, Manager, Employee (UI + API)
+- Admin and Senior Manager can create projects and manage people (including Excel import)
 - Project lifecycle: Bid → Need to Start → Script WIP → Changes → Live → Close
 - Tasks, assignments, self-assignment
 - Hours by Initial Scripting / Changes / Live

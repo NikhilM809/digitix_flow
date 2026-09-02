@@ -1,15 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Role } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { notifyUsers } from "@/lib/notify";
-import { assertRole, requireUser } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, STAFF_ROLES, assertRole, requireUser } from "@/lib/permissions";
 import { clearSettingsCache } from "@/lib/data";
 
 export async function addProjectNote(projectId: string, formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN, Role.MANAGER]);
+  assertRole(user, STAFF_ROLES);
   const content = String(formData.get("content") ?? "").trim();
   if (!content) return { error: "Write a note first." };
   const project = await prisma.project.findUnique({
@@ -34,7 +33,7 @@ export async function addProjectNote(projectId: string, formData: FormData) {
 
 export async function saveSettings(formData: FormData) {
   const user = await requireUser();
-  assertRole(user, [Role.ADMIN]);
+  assertRole(user, ADMIN_LIKE_ROLES);
   const data = {
     companyName: String(formData.get("companyName") ?? "Digitix Labs"),
     companyAddress: String(formData.get("companyAddress") ?? ""),

@@ -18,7 +18,7 @@ import { billingStatusForProject } from "@/lib/finance";
 import { getActiveCurrencies } from "@/lib/currency";
 import { getActiveClients, getActiveWorkTypes } from "@/lib/catalog";
 import { formatDate, formatHours, formatMoney } from "@/lib/format";
-import { canSeeFinance, requireRole } from "@/lib/permissions";
+import { STAFF_ROLES, canSeeFinance, isAdminLike, requireRole } from "@/lib/permissions";
 import { asFormAction } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
@@ -33,7 +33,7 @@ export default async function ProjectDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ tab?: string }>;
 }) {
-  const user = await requireRole("ADMIN", "MANAGER");
+  const user = await requireRole(...STAFF_ROLES);
   const { id } = await params;
   const { tab = "overview" } = await searchParams;
   const finance = canSeeFinance(user.role);
@@ -85,19 +85,19 @@ export default async function ProjectDetailPage({
               <ConfirmForm message="Close this project? It will move to Closed Projects and become eligible for billing." action={closeProject.bind(null, project.id)}>
                 <Button variant="outline">Mark closed</Button>
               </ConfirmForm>
-            ) : user.role === "ADMIN" && project.status === "CLOSE" ? (
+            ) : isAdminLike(user.role) && project.status === "CLOSE" ? (
               <>
                 <ExportApprovalButton projectId={project.id} />
                 <ConfirmForm message="Reopen this project?" action={reopenProject.bind(null, project.id)}>
                   <Button variant="outline">Reopen</Button>
                 </ConfirmForm>
               </>
-            ) : user.role === "ADMIN" && project.status === "CANCEL" ? (
+            ) : isAdminLike(user.role) && project.status === "CANCEL" ? (
               <ConfirmForm message="Reopen this project?" action={reopenProject.bind(null, project.id)}>
                 <Button variant="outline">Reopen</Button>
               </ConfirmForm>
             ) : null}
-            {user.role === "ADMIN" ? (
+            {isAdminLike(user.role) ? (
               <ConfirmForm
                 message="Remove this project permanently? Hours, tasks, and invoices on it will also be deleted."
                 action={deleteProject.bind(null, project.id)}

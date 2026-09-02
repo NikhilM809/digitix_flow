@@ -10,14 +10,14 @@ import { ensureCurrencies } from "@/lib/currency";
 import { getActiveClients, getActiveInvoiceServices } from "@/lib/catalog";
 import { displayBillingStatus, totalsByCurrency } from "@/lib/finance";
 import { formatHours, formatMonthYear } from "@/lib/format";
-import { requireRole } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, requireRole } from "@/lib/permissions";
 
 export default async function BillingPage({
   searchParams,
 }: {
   searchParams: Promise<{ month?: string; year?: string; client?: string; scope?: string; q?: string }>;
 }) {
-  await requireRole("ADMIN");
+  await requireRole(...ADMIN_LIKE_ROLES);
   await ensureCurrencies();
   const settings = await getSettings();
   const now = new Date();

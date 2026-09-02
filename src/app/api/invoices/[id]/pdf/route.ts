@@ -3,13 +3,13 @@ import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/data";
 import { findClientByName } from "@/lib/catalog";
 import { buildInvoicePdf } from "@/lib/invoice-pdf";
-import { requireApiRole } from "@/lib/permissions";
+import { ADMIN_LIKE_ROLES, requireApiRole } from "@/lib/permissions";
 
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const authz = await requireApiRole("ADMIN");
+  const authz = await requireApiRole(...ADMIN_LIKE_ROLES);
   if (!authz.ok) return authz.response;
   const { id } = await context.params;
   const invoice = await prisma.invoice.findUnique({
