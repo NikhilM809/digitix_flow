@@ -11,7 +11,9 @@ export const DEFAULT_WORK_TYPES = [
 
 export const DEFAULT_INVOICE_SERVICES = ["Survey Programming and Consulting"];
 
-export async function ensureCatalog() {
+let catalogReady: Promise<void> | null = null;
+
+async function seedCatalog() {
   const [workTypes, services, clients] = await Promise.all([
     prisma.workTypeOption.count(),
     prisma.invoiceService.count(),
@@ -41,6 +43,13 @@ export async function ensureCatalog() {
       })),
     });
   }
+
+  const needsBackfill = await prisma.project.findFirst({
+    where: { initialSellValue: 0, sellValue: { gt: 0 } },
+    select: { id: true },
+  });
+  if (!needsBackfill) return;
+
   await prisma.$executeRawUnsafe(
     `UPDATE Project SET initialSellValue = sellValue WHERE initialSellValue = 0 AND sellValue > 0`,
   );
@@ -50,11 +59,16 @@ export async function ensureCatalog() {
   await prisma.$executeRawUnsafe(
     `UPDATE Project SET programmerHours = ROUND(estimatedHours * 0.6, 1), qaHours = ROUND(estimatedHours * 0.3, 1), marginHours = ROUND(estimatedHours - ROUND(estimatedHours * 0.6, 1) - ROUND(estimatedHours * 0.3, 1), 1) WHERE programmerHours = 0 AND estimatedHours > 0`,
   );
-  return {
-    clients: await prisma.client.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
-    workTypes: await prisma.workTypeOption.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
-    services: await prisma.invoiceService.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
-  };
+}
+
+export async function ensureCatalog() {
+  if (!catalogReady) {
+    catalogReady = seedCatalog().catch((error) => {
+      catalogReady = null;
+      throw error;
+    });
+  }
+  await catalogReady;
 }
 
 export async function getActiveClients() {

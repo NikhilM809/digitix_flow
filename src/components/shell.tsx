@@ -24,6 +24,7 @@ import { markAllNotificationsRead, markNotificationRead } from "@/actions/misc";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { BrandLogo } from "@/components/logo";
@@ -60,6 +61,19 @@ function navFor(role: Role) {
   if (role === "ADMIN") return ADMIN_NAV;
   if (role === "MANAGER") return MANAGER_NAV;
   return EMPLOYEE_NAV;
+}
+
+function SignOutButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white disabled:opacity-60"
+      disabled={pending}
+    >
+      <LogOut size={18} />
+      {pending ? "Signing out..." : "Sign out"}
+    </button>
+  );
 }
 
 export function AppShell({
@@ -107,10 +121,7 @@ export function AppShell({
           })}
         </nav>
         <form action={logoutAction} className="p-4">
-          <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white">
-            <LogOut size={18} />
-            Sign out
-          </button>
+          <SignOutButton />
         </form>
       </aside>
 

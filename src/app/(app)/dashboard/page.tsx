@@ -31,13 +31,15 @@ export default async function DashboardPage({
 }
 
 async function AdminDashboard({ client }: { client: string }) {
-  const settings = await getSettings();
+  const [settings, clients, projects] = await Promise.all([
+    getSettings(),
+    getActiveClients(),
+    prisma.project.findMany({
+      where: client ? { clientName: client } : {},
+      include: { timeEntries: { select: { hours: true } }, invoices: true, currency: true },
+    }),
+  ]);
   await ensureCurrencies();
-  const clients = await getActiveClients();
-  const projects = await prisma.project.findMany({
-    where: client ? { clientName: client } : {},
-    include: { timeEntries: { select: { hours: true } }, invoices: true, currency: true },
-  });
   const byStatus = (status: ProjectStatus) => projects.filter((p) => p.status === status).length;
   const active = projects.filter((p) => !isInactiveStatus(p.status));
   const overdue = active.filter((p) => isOverdue(p.eta, p.status)).length;

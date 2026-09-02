@@ -5,6 +5,7 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { notifyUsers } from "@/lib/notify";
 import { assertRole, requireUser } from "@/lib/permissions";
+import { clearSettingsCache } from "@/lib/data";
 
 export async function addProjectNote(projectId: string, formData: FormData) {
   const user = await requireUser();
@@ -62,6 +63,7 @@ export async function saveSettings(formData: FormData) {
     update: data,
     create: { id: "default", ...data },
   });
+  clearSettingsCache();
   revalidatePath("/settings");
   revalidatePath("/billing");
   return { ok: true };

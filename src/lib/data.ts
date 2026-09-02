@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { workTypeBucket } from "@/lib/work-types";
+import type { Setting } from "@prisma/client";
 
 export async function nextProjectCode() {
   const latest = await prisma.project.findFirst({
@@ -45,11 +46,21 @@ export function maxInvoiceSequence(invoiceNumbers: string[]) {
   return max;
 }
 
+let settingsCache: Setting | undefined;
+
+export function clearSettingsCache() {
+  settingsCache = undefined;
+}
+
 export async function getSettings() {
-  return prisma.setting.upsert({
-    where: { id: "default" },
-    update: {},
-    create: {
+  if (settingsCache) return settingsCache;
+  const existing = await prisma.setting.findUnique({ where: { id: "default" } });
+  if (existing) {
+    settingsCache = existing;
+    return existing;
+  }
+  settingsCache = await prisma.setting.create({
+    data: {
       id: "default",
       companyName: "Digitixlabs LLP",
       companyAddress: "Flat no - 101, Tower - 2, ACE Parkway, Sector - 150, Noida, UP - 201310",
@@ -77,6 +88,7 @@ export async function getSettings() {
       logoUrl: "/logo.png",
     },
   });
+  return settingsCache;
 }
 
 export function sumHours<T extends { hours: number }>(entries: T[]) {

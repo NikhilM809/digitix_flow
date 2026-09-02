@@ -8,7 +8,9 @@ export const BUILT_IN_CURRENCIES = [
   { name: "Euro", code: "EUR", symbol: "€", isDefault: false },
 ] as const;
 
-export async function ensureCurrencies() {
+let currenciesReady: Promise<void> | null = null;
+
+async function seedCurrencies() {
   const existing = await prisma.currency.findMany();
   if (existing.length === 0) {
     await prisma.currency.createMany({ data: [...BUILT_IN_CURRENCIES] });
@@ -17,11 +19,14 @@ export async function ensureCurrencies() {
     await prisma.currency.update({ where: { id: inr.id }, data: { isDefault: true } });
   }
 
-  const fallback = await getDefaultCurrency();
-  await prisma.project.updateMany({
-    where: { currencyId: null },
-    data: { currencyId: fallback.id },
-  });
+  const missingCurrency = await prisma.project.count({ where: { currencyId: null } });
+  if (missingCurrency) {
+    const fallback = await getDefaultCurrency();
+    await prisma.project.updateMany({
+      where: { currencyId: null },
+      data: { currencyId: fallback.id },
+    });
+  }
 
   const closedUnbilled = await prisma.project.findMany({
     where: { status: "CLOSE", billingStage: "NONE", invoices: { none: {} } },
@@ -33,7 +38,16 @@ export async function ensureCurrencies() {
       data: { billingStage: "PENDING" },
     });
   }
+}
 
+export async function ensureCurrencies() {
+  if (!currenciesReady) {
+    currenciesReady = seedCurrencies().catch((error) => {
+      currenciesReady = null;
+      throw error;
+    });
+  }
+  await currenciesReady;
   return prisma.currency.findMany({ orderBy: { code: "asc" } });
 }
 
