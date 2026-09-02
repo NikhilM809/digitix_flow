@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f3efe6;
+  --paper-card: #fffcf7;
+  --ink: #1b2430;
+  --muted: #5b6573;
+  --line: #ddd4c4;
+  --teal: #0b6e6a;
+  --teal-dark: #085753;
+  --navy: #15202e;
+  --navy-2: #1d2b3d;
+  --gold: #c47b1a;
+  --danger: #b42318;
+}
+
+.dark {
+  --paper: #10151c;
+  --paper-card: #171e28;
+  --ink: #e8e4db;
+  --muted: #9aa3b0;
+  --line: #2a3544;
+  --teal: #3cb8b1;
+  --teal-dark: #2a9e98;
+  --navy: #0c1117;
+  --navy-2: #141b24;
+  --gold: #e0a04a;
+  --danger: #f97066;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-card: var(--paper-card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-teal: var(--teal);
+  --color-teal-dark: var(--teal-dark);
+  --color-navy: var(--navy);
+  --color-navy-2: var(--navy-2);
+  --color-gold: var(--gold);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+* {
+  border-color: var(--line);
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+}

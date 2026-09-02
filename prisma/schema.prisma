@@ -1,0 +1,331 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum ProjectStatus {
+  BID
+  NEED_TO_START
+  SCRIPT_WIP
+  CHANGES
+  LIVE
+  HOLD
+  CLOSE
+  CANCEL
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+}
+
+enum InvoiceStatus {
+  GENERATED
+  PAID
+}
+
+enum BillingStage {
+  NONE
+  PENDING
+  APPROVAL_REQUIRED
+  APPROVED
+}
+
+enum HourStatus {
+  SUBMITTED
+  REVIEWED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  managedProjects Project[]            @relation("ProjectManager")
+  assignments     ProjectAssignment[]
+  assignedByMe    ProjectAssignment[]  @relation("AssignedBy")
+  assignedTasks   Task[]               @relation("TaskAssignee")
+  createdTasks    Task[]               @relation("TaskAssigner")
+  timeEntries           TimeEntry[]
+  reviewedHours         TimeEntry[]            @relation("HourReviewer")
+  notes                 ProjectNote[]
+  notifications         Notification[]
+  exports               ProjectExport[]
+  statusChangedProjects Project[]              @relation("StatusChanger")
+  statusChanges         ProjectStatusChange[]
+}
+
+model Project {
+  id                   String        @id @default(cuid())
+  code                 String        @unique
+  name                 String
+  clientName           String
+  description          String        @default("")
+  status               ProjectStatus @default(BID)
+  managerId            String
+  manager              User          @relation("ProjectManager", fields: [managerId], references: [id])
+  sellValue            Float
+  initialSellValue     Float         @default(0)
+  programmerHours      Float         @default(0)
+  qaHours              Float         @default(0)
+  marginHours          Float         @default(0)
+  initialEstimatedHours Float        @default(0)
+  valueAlertSent       Boolean       @default(false)
+  changesAlertSent     Boolean       @default(false)
+  currencyId           String?
+  currency             Currency?     @relation(fields: [currencyId], references: [id])
+  billingStage         BillingStage  @default(NONE)
+  estimatedHours       Float
+  startDate            DateTime?
+  eta                  DateTime
+  actualStartDate      DateTime?
+  actualCompletionDate DateTime?
+  selfAssignEnabled    Boolean       @default(true)
+  statusChangedAt      DateTime?
+  statusChangedById    String?
+  statusChangedBy      User?         @relation("StatusChanger", fields: [statusChangedById], references: [id])
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  assignments    ProjectAssignment[]
+  tasks          Task[]
+  timeEntries    TimeEntry[]
+  notes          ProjectNote[]
+  invoices       Invoice[]
+  exports        ProjectExport[]
+  statusChanges  ProjectStatusChange[]
+
+  @@index([status])
+  @@index([managerId])
+  @@index([clientName])
+}
+
+model ProjectAssignment {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  employeeId   String
+  employee     User     @relation(fields: [employeeId], references: [id])
+  assignedById String
+  assignedBy   User     @relation("AssignedBy", fields: [assignedById], references: [id])
+  assignedAt   DateTime @default(now())
+
+  @@unique([projectId, employeeId])
+}
+
+model Task {
+  id                 String     @id @default(cuid())
+  projectId          String
+  project            Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name               String
+  description        String     @default("")
+  assignedEmployeeId String?
+  assignedEmployee   User?      @relation("TaskAssignee", fields: [assignedEmployeeId], references: [id])
+  assignedById       String?
+  assignedBy         User?      @relation("TaskAssigner", fields: [assignedById], references: [id])
+  assignedAt         DateTime?
+  estimatedHours     Float      @default(0)
+  startDate          DateTime?
+  dueDate            DateTime?
+  status             TaskStatus @default(NOT_STARTED)
+  notes              String     @default("")
+  selfAssignEnabled  Boolean    @default(true)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  timeEntries TimeEntry[]
+}
+
+model TimeEntry {
+  id           String     @id @default(cuid())
+  projectId    String
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  taskId       String?
+  task         Task?      @relation(fields: [taskId], references: [id])
+  employeeId   String
+  employee     User       @relation(fields: [employeeId], references: [id])
+  date         DateTime
+  workType     String
+  hours        Float
+  notes        String     @default("")
+  status       HourStatus @default(SUBMITTED)
+  reviewedById String?
+  reviewedBy   User?      @relation("HourReviewer", fields: [reviewedById], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([projectId])
+  @@index([employeeId])
+  @@index([date])
+}
+
+model ProjectNote {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model ProjectStatusChange {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fromStatus  String
+  toStatus    String
+  changedById String
+  changedBy   User     @relation(fields: [changedById], references: [id])
+  changedAt   DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model Invoice {
+  id             String         @id @default(cuid())
+  invoiceNumber  String         @unique
+  projectId      String
+  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  batchId        String?
+  batch          InvoiceBatch?  @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  billingMonth   Int
+  billingYear    Int
+  invoiceDate    DateTime
+  amount         Float
+  currencyCode   String         @default("INR")
+  currencySymbol String         @default("Rs.")
+  status         InvoiceStatus  @default(GENERATED)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([projectId, billingMonth, billingYear])
+}
+
+model InvoiceBatch {
+  id             String         @id @default(cuid())
+  invoiceNumber  String         @unique
+  clientName     String
+  billingMonth   Int
+  billingYear    Int
+  invoiceDate    DateTime
+  currencyCode   String
+  currencySymbol String
+  discount       Float          @default(0)
+  gstRate        Float          @default(0)
+  status         InvoiceStatus  @default(GENERATED)
+  source         String         @default("GENERATED")
+  pdfPath        String         @default("")
+  servicesDescription String    @default("")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  invoices       Invoice[]
+}
+
+model ProjectExport {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  exportedById String
+  exportedBy   User     @relation(fields: [exportedById], references: [id])
+  exportedAt   DateTime @default(now())
+  billingMonth Int
+  billingYear  Int
+  exportType   String   @default("APPROVAL")
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  legalName String   @default("")
+  address   String   @default("")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InvoiceService {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model WorkTypeOption {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  category  String   @default("other")
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Currency {
+  id        String    @id @default(cuid())
+  name      String
+  code      String    @unique
+  symbol    String
+  active    Boolean   @default(true)
+  isDefault Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  projects  Project[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  href      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id                   String @id @default("default")
+  companyName          String @default("Digitix Labs")
+  companyAddress       String @default("")
+  companyEmail         String @default("")
+  companyPhone         String @default("")
+  logoUrl              String @default("")
+  panNumber            String @default("")
+  tanNumber            String @default("")
+  gstin                String @default("")
+  lutNumber            String @default("")
+  servicesDescription  String @default("Survey Programming and Consulting")
+  gstRate              Float  @default(0)
+  bankAccountName      String @default("")
+  bankName             String @default("")
+  bankAccountNumber    String @default("")
+  bankIfsc             String @default("")
+  bankSwift            String @default("")
+  bankMicr             String @default("")
+  bankBranch           String @default("")
+  bankBranchCode       String @default("")
+  bankCountry          String @default("India")
+  billToName           String @default("")
+  billToAddress        String @default("")
+  currency             String @default("INR")
+  etaWarningDays       Int    @default(7)
+  invoicePrefix        String @default("PP/DXL")
+}
