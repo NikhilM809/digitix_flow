@@ -4,6 +4,15 @@ Project management, employee time tracking, sales reporting, and monthly billing
 
 ## Run locally
 
+Worknest uses its **own PostgreSQL database** (`digitix_flow`). Do not point `DATABASE_URL` at the HRMS database (`digitix_hrms`).
+
+```bash
+# once, as a Postgres superuser
+psql -U postgres -d postgres -f scripts/create-worknest-db.sql
+```
+
+Copy `.env.example` to `.env`, then:
+
 ```bash
 npm install
 npx prisma db push
@@ -35,4 +44,4 @@ Password for all accounts: `Digitix@123`
 - Admin-only financials, sales charts, and billing PDFs
 - Light / dark mode
 
-SQLite is used for local development (`prisma/dev.db`). Switch the Prisma datasource to PostgreSQL when you are ready to deploy.
+PostgreSQL is required. HRMS and Worknest stay on separate databases.
